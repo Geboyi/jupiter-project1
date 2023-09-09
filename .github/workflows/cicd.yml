@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches:
-      - main  
+    branches: [ main ]  
   pull_request:
+    branches: [ main ]
 
 jobs:
   build:
@@ -21,11 +21,11 @@ jobs:
 
       - name: Initialize Terraform
         run: terraform init  # Initialize Terraform configuration
-        #working-directory: ${{github.event.inputs.tfpath}} #not yet created a tfpath
+        working-directory: ./terraform/baseinfra #just a trial not final working directory code.
 
       - name: Validate Terraform
         run: terraform validate  # Validate Terraform code
-        #working-directory: ${{github.event.inputs.tfpath}} 
+        working-directory: ./terraform/baseinfra #${{github.event.inputs.tfpath}} 
 
       - name: Notify team
         run: echo "CI/CD workflow  run complete."  #Notification
