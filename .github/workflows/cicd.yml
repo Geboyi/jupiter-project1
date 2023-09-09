@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main  
+  pull-request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3  # This step checks out our repository code
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.5.7  # Adjust to latest Terraform version
+
+      - name: Initialize Terraform
+        run: terraform init  # Initialize Terraform configuration
+        #working-directory: ${{github.event.inputs.tfpath}} #not yet created a tfpath
+
+      - name: Validate Terraform
+        run: terraform validate  # Validate Terraform code
+        #working-directory: ${{github.event.inputs.tfpath}} 
+
+      - name: Notify team
+        run: echo "CI/CD workflow  run complete."  #Notification
+
