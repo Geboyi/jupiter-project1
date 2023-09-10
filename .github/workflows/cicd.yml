@@ -34,5 +34,9 @@ jobs:
         run: terraform validate  # Validate Terraform code
         working-directory: ./terraform/baseinfra #${{github.event.inputs.tfpath}}
 
+      - name: Apply Terraform
+        run: terraform apply --auto-approve  # Validate Terraform code
+        working-directory: ./terraform/baseinfra #${{github.event.inputs.tfpath}}
+
       - name: Notify team
         run: echo "CI/CD workflow  run complete."  #Notification
