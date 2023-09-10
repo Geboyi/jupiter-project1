@@ -4,6 +4,7 @@ config-map-aws-auth*.yaml
 kubeconfig_*
 .idea
 victor
+clem
 
 #################################################################
 # Default .gitignore content for all terraform-aws-modules below
