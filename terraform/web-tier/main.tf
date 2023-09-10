@@ -5,15 +5,15 @@ provider "aws" {
 
 data "terraform_remote_state" "remote" {
   backend = "s3"
-  config =  {
+  config = {
     bucket = "technologiesoutcomes-terraform-backend"
-    key = "3tier-baseinfra.tfstate"
+    key    = "3tier-baseinfra.tfstate"
     region = "eu-west-1"
   }
 }
 
 resource "aws_network_interface" "bar" {
-  subnet_id       = "${data.terraform_remote_state.remote.outputs.public_subnets[0]}"
+  subnet_id       = data.terraform_remote_state.remote.outputs.public_subnets[0]
   security_groups = [aws_security_group.ec2_web.id]
 
   tags = {
@@ -59,7 +59,7 @@ sudo sed -i "s/'database_name_here'/'$DBName'/g" wp-config.php
 sudo sed -i "s/'username_here'/'$DBUser'/g" wp-config.php
 sudo sed -i "s/'password_here'/'$DBPassword'/g" wp-config.php
 
-sudo usermod -a -G apache ec2-user   
+sudo usermod -a -G apache ec2-user
 sudo chown -R ec2-user:apache /var/www
 sudo chmod 2775 /var/www
 sudo find /var/www -type d -exec chmod 2775 {} \;
@@ -83,7 +83,7 @@ EOF
 resource "aws_security_group" "ec2_web" {
   name        = "allow_tls"
   description = "Allow TLS inbound traffic"
-  vpc_id      = "${data.terraform_remote_state.remote.outputs.vpc_id}"
+  vpc_id      = data.terraform_remote_state.remote.outputs.vpc_id
 
   #ingress {
   #  description     = "TLS from VPC"
@@ -131,7 +131,7 @@ resource "aws_key_pair" "masterkey4" {
 resource "aws_security_group" "lb_sg" {
   name        = "alb_sg"
   description = "Allow TLS inbound traffic"
-  vpc_id      = "${data.terraform_remote_state.remote.outputs.vpc_id}"
+  vpc_id      = data.terraform_remote_state.remote.outputs.vpc_id
 
   ingress {
     description = "TLS from VPC"
@@ -189,7 +189,7 @@ resource "aws_lb_target_group" "test" {
   name     = "tf-example-lb-tg"
   port     = 80
   protocol = "HTTP"
-  vpc_id   = "${data.terraform_remote_state.remote.outputs.vpc_id}"
+  vpc_id   = data.terraform_remote_state.remote.outputs.vpc_id
 
   health_check {
     enabled           = true
