@@ -7,7 +7,7 @@ data "terraform_remote_state" "remote" {
   backend = "s3"
   config = {
     bucket = "technologiesoutcomes-terraform-backend"
-    key    = "3tier-baseinfra.tfstate"
+    key    = "jupiter/3tier-baseinfra.tfstate"
     region = "eu-west-1"
   }
 }
