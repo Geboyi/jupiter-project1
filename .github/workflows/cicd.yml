@@ -47,7 +47,7 @@ jobs:
           fi
           terraform init  # Initialize Terraform configuration
           terraform validate  # Validate Terraform code
-          terraform apply --auto-approve  # Validate Terraform code
+          terraform apply --auto-approve  # Apply terraform code
         #no need for working-directory
 
       - name: Notify team
