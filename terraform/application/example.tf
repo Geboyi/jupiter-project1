@@ -1,7 +1,7 @@
 
-provider "aws" {
-  region = "eu-west-1"
-}
+#provider "aws" {
+#  region = "eu-west-1"
+#}
 
 data "terraform_remote_state" "remote" {
   backend = "s3"
