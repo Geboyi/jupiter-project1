@@ -1,20 +1,21 @@
 name: CI
 
 on:
-  #push and pull_request will automatically tigger workflow to run
+  #push and pull_request will automatically trigger workflow to run
   push:
     branches: [ main ]
 
   pull_request:
     branches: [ main ]
-  #workflow_dispatch will allow for manual running of workflow
+
+  #workflow_dispatch will allow for manual triggering of workflow to run
   workflow_dispatch:
     # Inputs the workflow accepts.
     inputs:
       tfpath:
         description: 'TF File Path'
-        #required: false #when running workflow manually, is a must to provide tfpath
-        #to ensure consistency and avoid potential issues caused by missing input
+        #required: false  # To ensure consistency and avoid potential issues
+        #caused by missing input prior to running manually.
         default: './terraform/baseinfra/'
 
 jobs:
@@ -37,17 +38,17 @@ jobs:
         with:
           terraform_version: 1.5.7  # Adjust to latest Terraform version
 
-      - name: Initialize Terraform
-        run: terraform init  # Initialize Terraform configuration
-        working-directory: ${{ github.event.inputs.tfpath }}
-
-      - name: Validate Terraform
-        run: terraform validate  # Validate Terraform code
-        working-directory: ${{ github.event.inputs.tfpath }} #${{github.event.inputs.tfpath}}
-
-      - name: Apply Terraform
-        run: terraform apply --auto-approve  # Validate Terraform code
-        working-directory: ${{ github.event.inputs.tfpath }} #${{github.event.inputs.tfpath}}
+      - name: Initialize, Validate and Apply Terraform
+        run: |
+          if [ -n "${{ github.event.inputs.tfpath }}" ]; then
+            cd "${{ github.event.inputs.tfpath }}"
+          else
+            cd './terraform/baseinfra/'
+          fi
+          terraform init  # Initialize Terraform configuration
+          terraform validate  # Validate Terraform code
+          terraform apply --auto-approve  # Validate Terraform code
+        #no need for working-directory
 
       - name: Notify team
         run: echo "CI/CD workflow  run complete."  #Notification
