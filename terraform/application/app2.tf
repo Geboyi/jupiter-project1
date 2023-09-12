@@ -1,21 +1,13 @@
 
 
-data "terraform_remote_state" "remote" {
-  backend = "s3"
-  config =  {
-    bucket = "technologiesoutcomes-terraform-backend"
-    key = "jupiter/3tier-baseinfra.tfstate"
-    region = "eu-west-1"
-  }
-}
 
-module "alb_http_sg" {
+module "int_alb_http_sg" {
   source  = "terraform-aws-modules/security-group/aws//modules/http-80"
   version = "~> 4.0"
 
-  name        = "alb_sg_name"
+  name        = "int_alb_sg_name"
   vpc_id      = "${data.terraform_remote_state.remote.outputs.vpc_id}"
-  description = "alb_sg_description"
+  description = "int_alb_sg_description"
 
   ingress_cidr_blocks = ["0.0.0.0/0"] #var.alb_sg_ingress_cidr_blocks
   tags                = { "Name" = "demo-alb-sg", "created-by" = "terraform" } ## var.alb_sg_tags
@@ -25,13 +17,14 @@ module "alb_http_sg" {
 # Application load balancer (ALB)
 ################################################################################
 
-module "alb" {
+module "int_alb" {
   source          = "terraform-aws-modules/alb/aws"
   version         = "~> 6.0"
-  name            = "albname" # var.alb_name
+  name            = "internalalbname" # var.alb_name
   vpc_id          = "${data.terraform_remote_state.remote.outputs.vpc_id}"
-  subnets         = "${data.terraform_remote_state.remote.outputs.public_subnets}"
-  security_groups = [module.alb_http_sg.security_group_id]
+  subnets         = ["${data.terraform_remote_state.remote.outputs.private_subnets[0]}", "${data.terraform_remote_state.remote.outputs.private_subnets[1]}"]
+  security_groups = [module.int_alb_http_sg.security_group_id]
+  internal = true
 
   http_tcp_listeners = [
     {
@@ -43,7 +36,7 @@ module "alb" {
 
   target_groups = [
     {
-      name             = "alb-tg" #var.alb_target_group_name
+      name             = "intalb-tg" #var.alb_target_group_name
       backend_protocol = "HTTP"
       backend_port     = 80
       target_type      = "instance"
@@ -69,87 +62,12 @@ module "alb" {
 ###  ASG
 ###############################################################################################################
 
-locals {
-##  user_data = <<-EOT
-###!/bin/bash
-##yum update -y
-##amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2
-##yum install -y httpd
-##systemctl start httpd
-##systemctl enable httpd
-##usermod -a -G apache ec2-user
-##chown -R ec2-user:apache /var/www
-##chmod 2775 /var/www
-##find /var/www -type d -exec chmod 2775 {} \;
-##find /var/www -type f -exec chmod 0664 {} \;
-##echo '<?php phpinfo(); ?>' > /var/www/html/phpinfo.php
-##sudo yum install php-mbstring php-xml -y
-##sudo systemctl restart httpd
-##sudo systemctl restart php-fpm
-##cd /var/www/html
-##wget https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-all-languages.tar.gz
-##mkdir phpMyAdmin && tar -xvzf phpMyAdmin-latest-all-languages.tar.gz -C phpMyAdmin --strip-components 1
-##rm phpMyAdmin-latest-all-languages.tar.gz
-##echo '<?php phpinfo(); ?>' > /var/www/html/phpinfo.php
-##cd phpMyAdmin
-##mv config.sample.inc.php config.inc.php
-##sed -i 's/localhost/${module.rds.db_instance_address}/g' config.inc.php
-##  EOT
 
-user_data_wp = <<EOF
-#!/bin/bash
-DBRootPassword=myDBRootPwd
-DBName=myDB
-DBUser=myUser
-DBPassword=myUserPwd
-
-sudo dnf -y update
-sudo dnf install wget php-mysqlnd httpd php-fpm php-mysqli mariadb105-server php-json php php-devel stress -y
-
-sudo systemctl enable httpd
-sudo systemctl enable mariadb
-sudo systemctl start httpd
-sudo systemctl start mariadb
-
-sudo mysqladmin -u root password $DBRootPassword
-
-sudo wget http://wordpress.org/latest.tar.gz -P /var/www/html
-cd /var/www/html
-sudo tar -zxvf latest.tar.gz
-sudo cp -rvf wordpress/* .
-sudo rm -R wordpress
-sudo rm latest.tar.gz
-
-sudo cp ./wp-config-sample.php ./wp-config.php
-sudo sed -i "s/'database_name_here'/'$DBName'/g" wp-config.php
-sudo sed -i "s/'username_here'/'$DBUser'/g" wp-config.php
-sudo sed -i "s/'password_here'/'$DBPassword'/g" wp-config.php
-
-sudo usermod -a -G apache ec2-user
-sudo chown -R ec2-user:apache /var/www
-sudo chmod 2775 /var/www
-sudo find /var/www -type d -exec chmod 2775 {} \;
-sudo find /var/www -type f -exec chmod 0664 {} \;
-
-sudo echo "CREATE DATABASE $DBName;" >> /tmp/db.setup
-sudo echo "CREATE USER '$DBUser'@'localhost' IDENTIFIED BY '$DBPassword';" >> /tmp/db.setup
-sudo echo "GRANT ALL ON $DBName.* TO '$DBUser'@'localhost';" >> /tmp/db.setup
-sudo echo "FLUSH PRIVILEGES;" >> /tmp/db.setup
-sudo mysql -u root --password=$DBRootPassword < /tmp/db.setup
-sudo rm /tmp/db.setup
-EOF
-
-}
-
-################################################################################
-# Supporting Resources
-################################################################################
-
-module "asg_sg" {
+module "int_asg_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "~> 4.0"
 
-  name        = "asgname" #var.asg_sg_name
+  name        = "intasgname" #var.asg_sg_name
   description = "descr" #var.asg_sg_description
   vpc_id      = "${data.terraform_remote_state.remote.outputs.vpc_id}"
 
@@ -170,7 +88,7 @@ module "asg_sg" {
 # Autoscaling scaling group (ASG)
 ################################################################################
 
-module "asg" {
+module "int_asg" {
   source = "terraform-aws-modules/autoscaling/aws"
 
   # Autoscaling group
@@ -181,8 +99,8 @@ module "asg" {
   desired_capacity          = 2 # var.asg_desired_capacity
   wait_for_capacity_timeout = 0 # var.asg_wait_for_capacity_timeout
   health_check_type         = "EC2" # var.asg_health_check_type
-  vpc_zone_identifier       = "${data.terraform_remote_state.remote.outputs.public_subnets}"
-  target_group_arns         = module.alb.target_group_arns
+  vpc_zone_identifier       = "${data.terraform_remote_state.remote.outputs.private_subnets}"
+  target_group_arns         = module.int_alb.target_group_arns
   user_data                 = base64encode(local.user_data_wp)
 
   # Launch template
