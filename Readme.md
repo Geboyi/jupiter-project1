@@ -35,4 +35,5 @@ Compliance: The system ensures compliance with financial regulations and interna
 Resource Optimization: By tracking resource usage, organizations can rightsize resources, reducing waste and improving performance.
 
 Streamlined Operations: Automated workflows and integrations reduce manual effort, allowing teams to focus on core business activities
+
 ### Three-tier app
