@@ -39,16 +39,11 @@ jobs:
           terraform_version: 1.5.7  # Adjust to latest Terraform version
 
       - name: Initialize, Validate and Apply Terraform
+        working-directory: ./terraform/baseinfra/
         run: |
-          if [ -n "${{ github.event.inputs.tfpath }}" ]; then
-            cd "${{ github.event.inputs.tfpath }}"
-          else
-            cd './terraform/baseinfra/'
-          fi
           terraform init  # Initialize Terraform configuration
           terraform validate  # Validate Terraform code
           terraform apply --auto-approve  # Apply terraform code
-        #no need for working-directory
 
       - name: Notify team
         run: echo "CI/CD workflow  run complete."  #Notification
