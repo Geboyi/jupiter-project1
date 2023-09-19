@@ -267,6 +267,42 @@ output "https_listener_ids" {
   value       = module.alb.https_listener_ids
 }
 
+
+################################################################################
+# Elastic File System
+################################################################################
+
+output "efs_arn" {
+  description = "Amazon Resource Name of the file system"
+  value       = module.efs.arn
+}
+
+output "efs_id" {
+  description = "The ID that identifies the file system (e.g., `fs-ccfc0d65`)"
+  value       = module.efs.id
+}
+
+output "efs_dns_name" {
+  description = "The DNS name for the filesystem per [documented convention](http://docs.aws.amazon.com/efs/latest/ug/mounting-fs-mount-cmd-dns-name.html)"
+  value       = module.efs.dns_name
+}
+
+output "efs_size_in_bytes" {
+  description = "The latest known metered size (in bytes) of data stored in the file system, the value is not the exact size that the file system was at any point in time"
+  value       = module.efs.size_in_bytes
+}
+
+output "efs_mount_targets" {
+  description = "Map of mount targets created and their attributes"
+  value       = module.efs.mount_targets
+}
+
+output "efs_access_points" {
+  description = "Map of access points created and their attributes"
+  value       = module.efs.access_points
+}
+
+
 ################################################################################
 # Relational database service (RDS) outputs
 ################################################################################

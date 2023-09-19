@@ -7,18 +7,16 @@ module "db_security_group" {
   version     = "~> 4.0"
   name        = var.rds_sg_name
   description = var.rds_sg_description
-  vpc_id      = "${data.terraform_remote_state.remote_baseinfra.outputs.vpc_id}"
+  vpc_id      = "${data.terraform_remote_state.remote.outputs.vpc_id}"
   computed_ingress_with_source_security_group_id = [
     {
       rule                     = "mysql-tcp"
-      source_security_group_id = module.asg_security_group_id
+      source_security_group_id = module.asg_sg.security_group_id
     }
   ]
   number_of_computed_ingress_with_source_security_group_id = 1
   tags                                                     = var.rds_sg_tags
 }
-
-
 
 ################################################################################
 # Relational database service (RDS)
@@ -39,13 +37,14 @@ module "rds" {
   allocated_storage     = var.rds_allocated_storage
   max_allocated_storage = var.rds_max_allocated_storage
 
-  db_name  = var.rds_db_name
-  username = var.rds_username
+  db_name  = "wordpressdb" ##var.rds_db_name
+  username = "wordpressuser" ##var.rds_username
+  password = "myDBpassword"
   port     = var.rds_port
 
   multi_az               = var.rds_multi_az
-  subnet_ids             = "${data.terraform_remote_state.remote_baseinfra.outputs.database_subnets}"
-  vpc_security_group_ids = [module.security_group.security_group_id]
+  subnet_ids             = "${data.terraform_remote_state.remote.outputs.database_subnets}"
+  vpc_security_group_ids = [module.db_security_group.security_group_id]
 
   maintenance_window              = var.rds_maintenance_window
   backup_window                   = var.rds_backup_window
@@ -60,7 +59,7 @@ module "rds" {
   performance_insights_retention_period = var.rds_performance_insights_retention_period
   create_monitoring_role                = var.rds_create_monitoring_role
   monitoring_interval                   = var.rds_monitoring_interval
-  db_subnet_group_name                  = "${data.terraform_remote_state.remote_baseinfra.outputs.database_subnet_group}"
+  db_subnet_group_name                  = "${data.terraform_remote_state.remote.outputs.database_subnet_group}"
   parameters = [
     {
       name  = "character_set_client"
@@ -82,7 +81,7 @@ module "rds" {
 resource "aws_route53_zone" "private" {
   name = "threetiers.com"
   vpc {
-    vpc_id = "${data.terraform_remote_state.remote_baseinfra.outputs.vpc_id}"
+    vpc_id = "${data.terraform_remote_state.remote.outputs.vpc_id}"
   }
 }
 
@@ -91,5 +90,5 @@ resource "aws_route53_record" "dev-ns" {
   name    = "db.threetiers.com"
   type    = "CNAME"
   ttl     = "30"
-  records = aws_route53_zone.dev.name_servers
+  records = [module.rds.db_instance_endpoint]
 }

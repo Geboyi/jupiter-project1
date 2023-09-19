@@ -5,7 +5,6 @@ variable "region" {
   default     = "us-east-1"
 }
 
-
 # ASG variables
 variable "asg_sg_name" {
   description = "Name of the autoscaling group security group"
@@ -224,6 +223,7 @@ variable "alb_tags" {
   default     = { "Name" = "demo-alb", "created-by" = "terraform" }
 }
 
+
 # RDS variables
 variable "rds_sg_name" {
   description = "Relational database service security group name"
@@ -258,7 +258,7 @@ variable "rds_mysql_engine" {
 variable "rds_engine_version" {
   description = "Relational database service mysql engine version"
   type        = string
-  default     = "8.0.27"
+  default     = "8.0.33"
 }
 
 variable "rds_family" {

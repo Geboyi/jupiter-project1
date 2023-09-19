@@ -5,20 +5,12 @@
 locals {
 user_data_wp = <<EOF
 #!/bin/bash
-DBRootPassword=myDBRootPwd
-DBName=myDB
-DBUser=myUser
-DBPassword=myUserPwd
 
 sudo dnf -y update
-sudo dnf install wget php-mysqlnd httpd php-fpm php-mysqli mariadb105-server php-json php php-devel stress -y
+sudo dnf install wget php-mysqlnd httpd php-fpm php-mysqli mariadb105-server php-json php php-devel stress amazon-efs-utils -y
 
 sudo systemctl enable httpd
-sudo systemctl enable mariadb
 sudo systemctl start httpd
-sudo systemctl start mariadb
-
-sudo mysqladmin -u root password $DBRootPassword
 
 sudo wget http://wordpress.org/latest.tar.gz -P /var/www/html
 cd /var/www/html
@@ -27,23 +19,57 @@ sudo cp -rvf wordpress/* .
 sudo rm -R wordpress
 sudo rm latest.tar.gz
 
-sudo cp ./wp-config-sample.php ./wp-config.php
-sudo sed -i "s/'database_name_here'/'$DBName'/g" wp-config.php
-sudo sed -i "s/'username_here'/'$DBUser'/g" wp-config.php
-sudo sed -i "s/'password_here'/'$DBPassword'/g" wp-config.php
-
 sudo usermod -a -G apache ec2-user
 sudo chown -R ec2-user:apache /var/www
 sudo chmod 2775 /var/www
 sudo find /var/www -type d -exec chmod 2775 {} \;
 sudo find /var/www -type f -exec chmod 0664 {} \;
 
-sudo echo "CREATE DATABASE $DBName;" >> /tmp/db.setup
-sudo echo "CREATE USER '$DBUser'@'localhost' IDENTIFIED BY '$DBPassword';" >> /tmp/db.setup
-sudo echo "GRANT ALL ON $DBName.* TO '$DBUser'@'localhost';" >> /tmp/db.setup
-sudo echo "FLUSH PRIVILEGES;" >> /tmp/db.setup
-sudo mysql -u root --password=$DBRootPassword < /tmp/db.setup
-sudo rm /tmp/db.setup
+#######################################################################################
+
+EFSFSID=$(aws ssm get-parameters --region eu-west-1 --names /A4L/Wordpress/EFSFSID --query Parameters[0].Value)
+EFSFSID=`echo $EFSFSID | sed -e 's/^"//' -e 's/"$//'`
+echo -e "$EFSFSID:/ /var/www/html/wp-content efs _netdev,tls,iam 0 0" >> /etc/fstab
+mount -a -t efs defaults
+
+DBPassword=$(aws ssm get-parameters --region eu-west-1 --names /A4L/Wordpress/DBPassword --with-decryption --query Parameters[0].Value)
+DBPassword=`echo $DBPassword | sed -e 's/^"//' -e 's/"$//'`
+
+DBRootPassword=$(aws ssm get-parameters --region eu-west-1 --names /A4L/Wordpress/DBRootPassword --with-decryption --query Parameters[0].Value)
+DBRootPassword=`echo $DBRootPassword | sed -e 's/^"//' -e 's/"$//'`
+
+DBUser=$(aws ssm get-parameters --region eu-west-1 --names /A4L/Wordpress/DBUser --query Parameters[0].Value)
+DBUser=`echo $DBUser | sed -e 's/^"//' -e 's/"$//'`
+
+DBName=$(aws ssm get-parameters --region eu-west-1 --names /A4L/Wordpress/DBName --query Parameters[0].Value)
+DBName=`echo $DBName | sed -e 's/^"//' -e 's/"$//'`
+
+DBEndpoint=$(aws ssm get-parameters --region eu-west-1 --names /A4L/Wordpress/DBEndpoint --query Parameters[0].Value)
+DBEndpoint=`echo $DBEndpoint | sed -e 's/^"//' -e 's/"$//'`
+
+#####################################################################################
+
+
+sudo cp /var/www/html/wp-config-sample.php /var/www/html/wp-config.php
+sudo sed -i "s/'database_name_here'/'$DBName'/g" /var/www/html/wp-config.php
+sudo sed -i "s/'username_here'/'$DBUser'/g" /var/www/html/wp-config.php
+sudo sed -i "s/'password_here'/'$DBPassword'/g" /var/www/html/wp-config.php
+## Uncomment this line when you migrate to RDS DB.
+sudo sed -i "s/'localhost'/'$DBEndpoint'/g" /var/www/html/wp-config.php
+
+####################################################################################
+
+##sudo systemctl enable mariadb
+##sudo systemctl start mariadb
+##sudo mysqladmin -u root password $DBRootPassword
+##
+##sudo echo "CREATE DATABASE $DBName;" >> /tmp/db.setup
+##sudo echo "CREATE USER '$DBUser'@'localhost' IDENTIFIED BY '$DBPassword';" >> /tmp/db.setup
+##sudo echo "GRANT ALL ON $DBName.* TO '$DBUser'@'localhost';" >> /tmp/db.setup
+##sudo echo "FLUSH PRIVILEGES;" >> /tmp/db.setup
+##sudo mysql -u root --password=$DBRootPassword < /tmp/db.setup
+##sudo rm /tmp/db.setup
+
 EOF
 
 }
@@ -162,4 +188,12 @@ module "asg" {
   ]
 
   tags = var.asg_tags
+
+  depends_on = [ aws_ssm_parameter.dbendpoint,
+  aws_ssm_parameter.dbname,
+  aws_ssm_parameter.dbpwd,
+  aws_ssm_parameter.dbrootpwd,
+  aws_ssm_parameter.dbrootpwd,
+  aws_ssm_parameter.dbuser,
+  aws_ssm_parameter.efs_id]
 }
