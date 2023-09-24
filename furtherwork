@@ -10,3 +10,5 @@ Areas of further work
 5) Design a plan for usinf SSL/TLS on the ALB
 6) Observability - Design an observability strategy for the system
 7) Design a plan for upgrading the deployment
+8) Improve the availability of the RDS instance
+9) Write up your work and mentally rehearse it
