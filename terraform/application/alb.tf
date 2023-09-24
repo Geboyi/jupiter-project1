@@ -7,7 +7,7 @@ module "alb_http_sg" {
   version = "~> 4.0"
 
   name        = var.alb_sg_name
-  vpc_id      = "${data.terraform_remote_state.remote.outputs.vpc_id}"
+  vpc_id      = data.terraform_remote_state.remote.outputs.vpc_id
   description = var.alb_sg_description
 
   ingress_cidr_blocks = var.alb_sg_ingress_cidr_blocks
@@ -22,8 +22,8 @@ module "alb" {
   source          = "terraform-aws-modules/alb/aws"
   version         = "~> 6.0"
   name            = var.alb_name
-  vpc_id          = "${data.terraform_remote_state.remote.outputs.vpc_id}"
-  subnets         = "${data.terraform_remote_state.remote.outputs.public_subnets}"
+  vpc_id          = data.terraform_remote_state.remote.outputs.vpc_id
+  subnets         = data.terraform_remote_state.remote.outputs.public_subnets
   security_groups = [module.alb_http_sg.security_group_id]
 
   http_tcp_listeners = [
@@ -57,3 +57,18 @@ module "alb" {
 
   tags = var.alb_tags
 }
+
+## create a public zone
+##resource "aws_route53_zone" "alb_zone" {
+##  name = "gerald.com"
+##
+##}
+##
+#### make entries into the zone
+##resource "aws_route53_record" "alb_dns" {
+##  zone_id = aws_route53_zone.alb_zone.zone_id
+##  name    = "mango.gerald.com" ## nickname
+##  type    = "CNAME"
+##  ttl     = "30"
+##  records = [module.alb.lb_dns_name] ## realname
+##}

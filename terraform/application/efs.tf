@@ -43,12 +43,16 @@ module "efs" {
   policy_statements = [
     {
       sid     = "Example"
-      actions = ["elasticfilesystem:ClientMount"]
+      actions = ["elasticfilesystem:ClientMount", "elasticfilesystem:ClientWrite"]
       principals = [
         {
           type        = "AWS"
           identifiers = [data.aws_caller_identity.current.arn]
-        }
+        },
+        ##{
+        ##  type        = "AWS"
+        ##  identifiers = ["arn:aws:iam::777595570545:role/demo-asg-iam-role"]
+        ##}
       ]
     }
   ]
@@ -56,12 +60,13 @@ module "efs" {
   # Mount targets / security group
   mount_targets              = { for k, v in zipmap(local.azs, "${data.terraform_remote_state.remote.outputs.private_subnets}") : k => { subnet_id = v } }
   security_group_description = "Example EFS security group"
-  security_group_vpc_id      = "${data.terraform_remote_state.remote.outputs.vpc_id}"
+  security_group_vpc_id      = data.terraform_remote_state.remote.outputs.vpc_id
   security_group_rules = {
     vpc = {
-      # relying on the defaults provdied for EFS/NFS (2049/TCP + ingress)
+      # relying on the defaults provided for EFS/NFS (2049/TCP + ingress)
       description = "NFS ingress from VPC private subnets"
       cidr_blocks = "${data.terraform_remote_state.remote.outputs.private_subnets_cidr_blocks}"
+      ##source_security_group_id =
     }
   }
 

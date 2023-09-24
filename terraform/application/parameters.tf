@@ -26,5 +26,5 @@ resource "aws_ssm_parameter" "dbname" {
 resource "aws_ssm_parameter" "dbendpoint" {
   name  = "/A4L/Wordpress/DBEndpoint"
   type  = "String"
-  value = "db.threetiers.com"
+  value = local.threetiersdb_endpoint
 }

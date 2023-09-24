@@ -1,13 +1,17 @@
 ################################################################################
 # Supporting Resources
 ################################################################################
+locals {
+  threetiersdb_endpoint = "threetiersdb.technologiesoutcomes.com"
+  domain_name           = "technologiesoutcomes.com"
+}
 
 module "db_security_group" {
   source      = "terraform-aws-modules/security-group/aws"
   version     = "~> 4.0"
   name        = var.rds_sg_name
   description = var.rds_sg_description
-  vpc_id      = "${data.terraform_remote_state.remote.outputs.vpc_id}"
+  vpc_id      = data.terraform_remote_state.remote.outputs.vpc_id
   computed_ingress_with_source_security_group_id = [
     {
       rule                     = "mysql-tcp"
@@ -24,7 +28,7 @@ module "db_security_group" {
 
 module "rds" {
   source  = "terraform-aws-modules/rds/aws"
-  version = "5.1.0"
+  version = "6.1.1"
   # insert the 1 required variable here
   identifier = var.rds_identifier
   # All available versions: http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_MySQL.html#MySQL.Concepts.VersionMgmt
@@ -37,13 +41,14 @@ module "rds" {
   allocated_storage     = var.rds_allocated_storage
   max_allocated_storage = var.rds_max_allocated_storage
 
-  db_name  = "wordpressdb" ##var.rds_db_name
-  username = "wordpressuser" ##var.rds_username
-  password = "myDBpassword"
-  port     = var.rds_port
+  manage_master_user_password = false
+  db_name                     = "wordpressdb"   ##var.rds_db_name
+  username                    = "wordpressuser" ##var.rds_username
+  password                    = "myDBpassword"
+  port                        = var.rds_port
 
   multi_az               = var.rds_multi_az
-  subnet_ids             = "${data.terraform_remote_state.remote.outputs.database_subnets}"
+  subnet_ids             = data.terraform_remote_state.remote.outputs.database_subnets
   vpc_security_group_ids = [module.db_security_group.security_group_id]
 
   maintenance_window              = var.rds_maintenance_window
@@ -59,7 +64,7 @@ module "rds" {
   performance_insights_retention_period = var.rds_performance_insights_retention_period
   create_monitoring_role                = var.rds_create_monitoring_role
   monitoring_interval                   = var.rds_monitoring_interval
-  db_subnet_group_name                  = "${data.terraform_remote_state.remote.outputs.database_subnet_group}"
+  db_subnet_group_name                  = data.terraform_remote_state.remote.outputs.database_subnet_group
   parameters = [
     {
       name  = "character_set_client"
@@ -79,16 +84,16 @@ module "rds" {
 }
 
 resource "aws_route53_zone" "private" {
-  name = "threetiers.com"
+  name = local.domain_name
   vpc {
-    vpc_id = "${data.terraform_remote_state.remote.outputs.vpc_id}"
+    vpc_id = data.terraform_remote_state.remote.outputs.vpc_id
   }
 }
 
 resource "aws_route53_record" "dev-ns" {
   zone_id = aws_route53_zone.private.zone_id
-  name    = "db.threetiers.com"
+  name    = local.threetiersdb_endpoint
   type    = "CNAME"
   ttl     = "30"
-  records = [module.rds.db_instance_endpoint]
+  records = [split(":", module.rds.db_instance_endpoint)[0]]
 }

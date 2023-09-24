@@ -3,7 +3,7 @@
 ################################################################################
 
 locals {
-user_data_wp = <<EOF
+  user_data_wp = <<EOF
 #!/bin/bash
 
 sudo dnf -y update
@@ -62,7 +62,7 @@ sudo sed -i "s/'localhost'/'$DBEndpoint'/g" /var/www/html/wp-config.php
 ##sudo systemctl enable mariadb
 ##sudo systemctl start mariadb
 ##sudo mysqladmin -u root password $DBRootPassword
-##
+####
 ##sudo echo "CREATE DATABASE $DBName;" >> /tmp/db.setup
 ##sudo echo "CREATE USER '$DBUser'@'localhost' IDENTIFIED BY '$DBPassword';" >> /tmp/db.setup
 ##sudo echo "GRANT ALL ON $DBName.* TO '$DBUser'@'localhost';" >> /tmp/db.setup
@@ -84,7 +84,7 @@ module "asg_sg" {
 
   name        = var.asg_sg_name
   description = var.asg_sg_description
-  vpc_id      = "${data.terraform_remote_state.remote.outputs.vpc_id}"
+  vpc_id      = data.terraform_remote_state.remote.outputs.vpc_id
 
   computed_ingress_with_source_security_group_id = [
     {
@@ -114,7 +114,7 @@ module "asg" {
   desired_capacity          = var.asg_desired_capacity
   wait_for_capacity_timeout = var.asg_wait_for_capacity_timeout
   health_check_type         = var.asg_health_check_type
-  vpc_zone_identifier       = "${data.terraform_remote_state.remote.outputs.private_subnets}"
+  vpc_zone_identifier       = data.terraform_remote_state.remote.outputs.private_subnets
   target_group_arns         = module.alb.target_group_arns
   user_data                 = base64encode(local.user_data_wp)
 
@@ -189,11 +189,11 @@ module "asg" {
 
   tags = var.asg_tags
 
-  depends_on = [ aws_ssm_parameter.dbendpoint,
-  aws_ssm_parameter.dbname,
-  aws_ssm_parameter.dbpwd,
-  aws_ssm_parameter.dbrootpwd,
-  aws_ssm_parameter.dbrootpwd,
-  aws_ssm_parameter.dbuser,
+  depends_on = [aws_ssm_parameter.dbendpoint,
+    aws_ssm_parameter.dbname,
+    aws_ssm_parameter.dbpwd,
+    aws_ssm_parameter.dbrootpwd,
+    aws_ssm_parameter.dbrootpwd,
+    aws_ssm_parameter.dbuser,
   aws_ssm_parameter.efs_id]
 }

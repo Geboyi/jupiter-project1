@@ -1,0 +1,119 @@
+
+
+Prove of concept (PoC) or Experimentation
+
+Gain understanding / common understanding of the issues within/between
+
+1) Set up simple connection to DB from standalone server or from ASG server
+a) SG
+b) Source IP
+c) Password/authentation
+b) Creation of the DB tables and configuration
+
+2) Attaching server to mount point EFS
+
+RCA - Root Cause Analysis - documented in knowledge-base (KB) article
+Socialising the solution
+comminication and collaboration -
+Writing and sharing technical solutions within the team.
+
+
+SRE - Site Reliability Engineering
+Troubleshooting (30-40%)
+Observability (Monitoring, Logging, tracing, alerting, notification, etc)
+
+
+Operations
+==========
+Deployment options
+1) Bootstrapping using user data
+2) Pre-baked image (Packer)
+3) 1 + 2
+
+4)
+Mutable - Pets
+Immutables - Cattle
+
+Zero-downtime deployment
+Performance testing
+Mounting the EFS
+(Highly Available)
+
+
+Design
+======
+
+
+
+
+
+
+Base Infrastructure layer
+--------------------------
+VPC - AZ, NAT, IGW, Subnets, SG, DNS (Rout53), Route Tables, etc
+
+Application layer
+-----------------
+ALB, ASG, EC2, EFS, RDS(DB),  DNS (Rout53), Parameter Store, etc
+
+Data (single source of truth)
+-----
+EFS - static files
+RDS - transaction data (dynamic) - relational data (Highly Available)
+
+
+Observability
+-------------
+Monitoring, Logging, tracing, alerting, notification, etc
+
+New Relic, ELF, DataDog,
+Prometheus, Zabbix
+
+Security
+--------
+SSL/TLS on ALB
+Management of secrets
+
+
+IAM
+----
+Who has access to the system
+1) 2 types
+admin
+customers
+
+
+Use nice names for your own deployment for the site URL (DNS Route53)
+---------------------------------------------------------------------
+
+======================================================================================================
+======================================================================================================
+
+
+mysql -h xxxxx -P 3306 -u wordpressuser -p
+
+sudo mount -t efs fs-0841630c87cfc0fdd efs/
+
+sudo mount -t efs -o tls,iam fs-0841630c87cfc0fdd efs/
+
+
+
+
+DNS global system (public DNS) ----> read a public zone
+
+Translate names into IP addresses
+
+Nickname
+blogs.technologiesoutcomes.com -
+
+blogs.technologiesoutcomes.com ====> demo-alb-1990580050.eu-west-1.elb.amazonaws.com
+
+
+
+
+demo-alb-1990580050.eu-west-1.elb.amazonaws.com ====> 9.8.7.6
+mangos.com ====> 1.2.3.4
+
+
+Private DNS ----> read a private zone which is always attached to a VPC
+db endpoint  = demo-rds.cekrr2e5fmpj.eu-west-1.rds.amazonaws.com:3306
