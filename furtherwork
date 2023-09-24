@@ -1,0 +1,12 @@
+
+
+Areas of further work
+=====================
+
+1) CICD - wire the Terraform code into the GitHub Actions Workflow
+2) EFS - mount the EFS mount targets and move the static content to the EFS
+3) Create a fancy name (nickname) for your Application Load Balancer (ALB) and using Route 53 create an entry for your ALB
+4) Security of secrets - design and implement a way of securing the DB secrets and remove them from the code.
+5) Design a plan for usinf SSL/TLS on the ALB
+6) Observability - Design an observability strategy for the system
+7) Design a plan for upgrading the deployment
