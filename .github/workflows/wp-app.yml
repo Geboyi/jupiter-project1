@@ -99,11 +99,15 @@ jobs:
 
       - name: Destroy Terraform application
         working-directory: ./terraform/application/
-        run: terraform destroy --auto-approve  # Destroy terraform code
+        run: |
+          terraform init
+          terraform destroy --auto-approve  # Destroy terraform code
 
       - name: Destroy Terraform baseinfra
         working-directory: ./terraform/baseinfra/
-        run: terraform destroy --auto-approve  # Destroy terraform code
+        run: |
+          terraform init
+          terraform destroy --auto-approve  # Destroy terraform code
 
       - name: Notify team
         run: echo "Terraform destroy run completed successfully.
