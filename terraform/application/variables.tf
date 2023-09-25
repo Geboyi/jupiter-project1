@@ -2,7 +2,7 @@
 variable "region" {
   description = "Region code"
   type        = string
-  default     = "us-east-1"
+  default     = "eu-west-1"
 }
 
 # ASG variables
@@ -81,7 +81,7 @@ variable "asg_update_default_version" {
 variable "asg_image_id" {
   description = "Auto scaling group image id"
   type        = string
-  default     = "ami-026b57f3c383c2eec"
+  default     = "ami-08f32efd140b7d89f"
 }
 
 variable "asg_instance_type" {
