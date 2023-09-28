@@ -45,7 +45,8 @@ module "rds" {
   db_name                     = "wordpressdb"   ##var.rds_db_name
   username                    = "wordpressuser" ##var.rds_username
   password                    = "myDBpassword"
-  port                        = var.rds_port
+  port                        = "3306"  ##var.rds_port"
+
 
   multi_az               = var.rds_multi_az
   subnet_ids             = data.terraform_remote_state.remote.outputs.database_subnets

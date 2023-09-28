@@ -28,3 +28,10 @@ resource "aws_ssm_parameter" "dbendpoint" {
   type  = "String"
   value = local.threetiersdb_endpoint
 }
+
+resource "aws_ssm_parameter" "efs_id" {
+  name  = "/A4L/Wordpress/EFSFSID"
+  type  = "String"
+  value = module.efs.id
+}
+
